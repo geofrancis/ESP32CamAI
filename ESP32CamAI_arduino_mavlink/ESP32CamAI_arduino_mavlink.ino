@@ -34,7 +34,7 @@
 #include <WiFiUdp.h>
 #include "camera_wrap.h"
 #include <vector>
-// #define DEBUG
+//#define DEBUG
 // #define SAVE_IMG
 
 enum TRACK {
@@ -45,8 +45,8 @@ enum TRACK {
   TRACK_STOP
 };
 
-const char* ssid = "p4f";    // <<< change this as yours
-const char* password = "roboticslearner"; // <<< change this as yours
+const char* ssid = "networkname";    // <<< change this as yours
+const char* password = "password"; // <<< change this as yours
 //holds the current upload
 int cameraInitState = -1;
 uint8_t* jpgBuff = new uint8_t[68123];
@@ -110,27 +110,8 @@ void controlServo() {
   servoWrite(SERVO_PITCH_CHANNEL, posServo);
 }
 
-void controlDC(int left0, int left1, int right0, int right1) {
-  digitalWrite(PINDC_LEFT_BACK, left0);
-  if (left1 == HIGH) {
-    ledcWrite(LEFT_CHANNEL, 255);
-  } else {
-    ledcWrite(LEFT_CHANNEL, 0);
-  }
-  digitalWrite(PINDC_RIGHT_BACK, right0);
-  if (right1 == HIGH) {
-    ledcWrite(RIGHT_CHANNEL, 255);
-  } else {
-    ledcWrite(RIGHT_CHANNEL, 0);
-  }
-}
 
-void controlDCTrack(int left, int right) {
-  digitalWrite(PINDC_LEFT_BACK, 0);
-  ledcWrite(LEFT_CHANNEL, left);
-  digitalWrite(PINDC_RIGHT_BACK, 0);
-  ledcWrite(RIGHT_CHANNEL, right);
-}
+
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
 
@@ -219,11 +200,11 @@ void processUDPData() {
     } else if (strPackage.equals("ledoff")) {
       digitalWrite(LED_BUILT_IN, LOW);
     } else if (strPackage.equals("lefttrack")) {
-      controlDCTrack(0, PWMTrackHIGH);
+    // command_lefttrack();
     } else if (strPackage.equals("righttrack")) {
-      controlDCTrack(PWMTrackHIGH, 0);
+    // command_righttrack();
     } else if (strPackage.equals("fwtrack")) {
-      controlDCTrack(PWMTrackLOW, PWMTrackLOW);
+   //  command_fwtrack();
     }
 
     memset(packetBuffer, 0, RECVLENGTH);
@@ -236,7 +217,7 @@ void command_heartbeat() {
   //< ID 1 for this system
   int sysid = 1;
   //< The component sending the message.
-  int compid = 195;
+  int compid = MAV_COMP_ID_PATHPLANNER;
 
   // Define the system type, in this case ground control station
   uint8_t system_type = MAV_TYPE_GCS;
@@ -265,9 +246,9 @@ void command_heartbeat() {
 
 void command_forward() {
 
-   //MAVLINK  MESSAGE
+  //MAVLINK  MESSAGE
   int sysid = 1;
-  int compid = 195;
+  int compid = MAV_COMP_ID_PATHPLANNER;
   uint32_t time_boot_ms = 0;
   uint8_t target_system = 1; /*<System ID of vehicle*/
   uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
@@ -284,7 +265,7 @@ void command_forward() {
   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 
   // Pack the message
-  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask,0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
 
   // Copy the message to the send buffer
   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
@@ -297,12 +278,65 @@ void command_forward() {
 
 void command_backward() {
 
+
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = 0.0; /*(Body yaw rate in radians*/
+  float thrust = -1; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
+
+  // Initialize the required buffers
+  mavlink_message_t msg;
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+  // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
+
+  // Copy the message to the send buffer
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
+  Serial.write(buf, len);
 }
 
 
 
 void command_left() {
 
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = -0.2; /*(Body yaw rate in radians*/
+  float thrust = 0.5; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
+
+  // Initialize the required buffers
+  mavlink_message_t msg;
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+  // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
+
+  // Copy the message to the send buffer
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
+  Serial.write(buf, len);
 }
 
 
@@ -311,13 +345,65 @@ void command_left() {
 
 void command_right() {
 
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = 0.2; /*(Body yaw rate in radians*/
+  float thrust = 0.5; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
+
+  // Initialize the required buffers
+  mavlink_message_t msg;
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+  // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
+
+  // Copy the message to the send buffer
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
+  Serial.write(buf, len);
 }
 
 
 
 void command_stop() {
 
- 
+
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = 0.0; /*(Body yaw rate in radians*/
+  float thrust = 1; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
+
+  // Initialize the required buffers
+  mavlink_message_t msg;
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+  // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
+
+  // Copy the message to the send buffer
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
+  Serial.write(buf, len);
 }
 
 
@@ -332,15 +418,6 @@ void setup(void) {
 
   pinMode(LED_BUILT_IN, OUTPUT);
   digitalWrite(LED_BUILT_IN, LOW);
-
-  pinMode(PINDC_LEFT_BACK, OUTPUT);
-  ledcSetup(LEFT_CHANNEL, 100, 8);//channel, freq, resolution
-  ledcAttachPin(PINDC_LEFT_FORWARD, LEFT_CHANNEL);
-  pinMode(PINDC_RIGHT_BACK, OUTPUT);
-  ledcSetup(RIGHT_CHANNEL, 100, 8);//channel, freq, resolution
-  ledcAttachPin(PINDC_RIGHT_FORWARD, RIGHT_CHANNEL);
-
-  controlDC(LOW, LOW, LOW, LOW);
 
   // 1. 50hz ==> period = 20ms (sg90 servo require 20ms pulse, duty cycle is 1->2ms: -90=>90degree)
   // 2. resolution = 16, maximum value is 2^16-1=65535
@@ -399,7 +476,7 @@ void loop(void) {
 
     processUDPData();
     controlServo();
-    command_heartbeat();
+    
 
   }
 
@@ -415,7 +492,7 @@ void loop(void) {
     int left1 = vposVals[1].toInt();
     int left2 = vposVals[2].toInt();
     int left3 = vposVals[3].toInt();
-    controlDC(left0, left1, left2, left3);
+
   }
 #endif
 }
