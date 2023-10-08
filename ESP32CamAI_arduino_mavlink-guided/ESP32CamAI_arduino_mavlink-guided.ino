@@ -1,19 +1,14 @@
 /*
   BSD 2-Clause License
-
   Copyright (c) 2020, ANM-P4F
   All rights reserved.
-
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-
   1. Redistributions of source code must retain the above copyright notice, this
    list of conditions and the following disclaimer.
-
   2. Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
-
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -45,8 +40,8 @@ enum TRACK {
   TRACK_STOP
 };
 
-const char* ssid = "2.4GN";    // <<< change this as yours
-const char* password = "passw0rded"; // <<< change this as yours
+const char* ssid = "networkname";    // <<< change this as yours
+const char* password = "password"; // <<< change this as yours
 //holds the current upload
 int cameraInitState = -1;
 uint8_t* jpgBuff = new uint8_t[68123];
@@ -68,6 +63,13 @@ String html_home;
 const int LED_BUILT_IN        = 4;
 const uint8_t TRACK_DUTY      = 100;
 const int PIN_SERVO_PITCH     = 12;
+// const int PIN_SERVO_YAW       = 2;
+const int PINDC_LEFT_BACK     = 13;
+const int PINDC_LEFT_FORWARD  = 15;
+const int PINDC_RIGHT_BACK    = 14;
+const int PINDC_RIGHT_FORWARD = 2;
+const int LEFT_CHANNEL        = 2;
+const int RIGHT_CHANNEL       = 3;
 const int SERVO_PITCH_CHANNEL = 4;
 const int SERVO_YAW_CHANNEL   = 5;
 const int SERVO_RESOLUTION    = 16;
@@ -189,15 +191,15 @@ void processUDPData() {
       servoUp = false;
       servoDown = false;
     } else if (strPackage.equals("ledon")) {
-      command_forward();;
+      digitalWrite(LED_BUILT_IN, HIGH);
     } else if (strPackage.equals("ledoff")) {
-      command_right();
+      digitalWrite(LED_BUILT_IN, LOW);
     } else if (strPackage.equals("lefttrack")) {
-      command_left();
+    // command_lefttrack();
     } else if (strPackage.equals("righttrack")) {
-     command_right();
+    // command_righttrack();
     } else if (strPackage.equals("fwtrack")) {
-     command_forward();
+   //  command_fwtrack();
     }
 
     memset(packetBuffer, 0, RECVLENGTH);
@@ -239,40 +241,32 @@ void command_heartbeat() {
 
 void command_forward() {
 
-  uint8_t target_system = 255 ;  //  System ID
-uint8_t target_component = 0;   //  Component ID
-uint16_t chan1_raw = 0;//  us  RC channel 1 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan2_raw = 0; //  us  RC channel 2 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan3_raw = 1600; //  us  RC channel 3 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan4_raw = 0; //  us  RC channel 4 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan5_raw = 0; //  us  RC channel 5 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan6_raw = 0; //  us  RC channel 6 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan7_raw = 0; //  us  RC channel 7 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan8_raw = 0; //  us  RC channel 8 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan9_raw = 0;  //**  us  RC channel 9 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan10_raw = 0; //**  us  RC channel 10 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan11_raw = 0; //**  us  RC channel 11 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan12_raw = 0; //**  us  RC channel 12 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan13_raw = 0; //**  us  RC channel 13 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan14_raw = 0; //**  us  RC channel 14 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan15_raw = 0; //**  us  RC channel 15 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan16_raw = 0; //**  us  RC channel 16 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan17_raw = 0; //**  us  RC channel 17 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan18_raw = 0; //**  us  RC channel 18 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-
-
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = 0.0; /*(Body yaw rate in radians*/
+  float thrust = 1; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
 
   // Initialize the required buffers
   mavlink_message_t msg;
   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-  int type = MAV_TYPE_GROUND_ROVER;
+
   // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
 
-  mavlink_msg_rc_channels_override_pack(target_system, target_component, &msg, target_component, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, chan9_raw, chan10_raw, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw, chan16_raw, chan17_raw, chan18_raw,0);
+  // Copy the message to the send buffer
   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
   Serial.write(buf, len);
-
-
 }
 
 
@@ -280,80 +274,64 @@ uint16_t chan18_raw = 0; //**  us  RC channel 18 value. A value of 0 or UINT16_M
 void command_backward() {
 
 
-  uint8_t target_system = 255 ;  //  System ID
-uint8_t target_component = 0;   //  Component ID
-uint16_t chan1_raw = 0;//  us  RC channel 1 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan2_raw = 0; //  us  RC channel 2 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan3_raw = 1400; //  us  RC channel 3 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan4_raw = 0; //  us  RC channel 4 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan5_raw = 0; //  us  RC channel 5 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan6_raw = 0; //  us  RC channel 6 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan7_raw = 0; //  us  RC channel 7 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan8_raw = 0; //  us  RC channel 8 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan9_raw = 0;  //**  us  RC channel 9 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan10_raw = 0; //**  us  RC channel 10 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan11_raw = 0; //**  us  RC channel 11 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan12_raw = 0; //**  us  RC channel 12 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan13_raw = 0; //**  us  RC channel 13 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan14_raw = 0; //**  us  RC channel 14 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan15_raw = 0; //**  us  RC channel 15 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan16_raw = 0; //**  us  RC channel 16 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan17_raw = 0; //**  us  RC channel 17 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan18_raw = 0; //**  us  RC channel 18 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-
-
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = 0.0; /*(Body yaw rate in radians*/
+  float thrust = -1; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
 
   // Initialize the required buffers
   mavlink_message_t msg;
   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-  int type = MAV_TYPE_GROUND_ROVER;
+
   // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
 
-  mavlink_msg_rc_channels_override_pack(target_system, target_component, &msg, target_component, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, chan9_raw, chan10_raw, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw, chan16_raw, chan17_raw, chan18_raw,0);
+  // Copy the message to the send buffer
   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
   Serial.write(buf, len);
-
-
 }
 
 
 
 void command_left() {
 
-uint8_t target_system = 255 ;  //  System ID
-uint8_t target_component = 0;   //  Component ID
-uint16_t chan1_raw = 0;//  us  RC channel 1 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan2_raw = 0; //  us  RC channel 2 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan3_raw = 0; //  us  RC channel 3 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan4_raw = 1400; //  us  RC channel 4 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan5_raw = 0; //  us  RC channel 5 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan6_raw = 0; //  us  RC channel 6 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan7_raw = 0; //  us  RC channel 7 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan8_raw = 0; //  us  RC channel 8 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan9_raw = 0;  //**  us  RC channel 9 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan10_raw = 0; //**  us  RC channel 10 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan11_raw = 0; //**  us  RC channel 11 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan12_raw = 0; //**  us  RC channel 12 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan13_raw = 0; //**  us  RC channel 13 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan14_raw = 0; //**  us  RC channel 14 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan15_raw = 0; //**  us  RC channel 15 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan16_raw = 0; //**  us  RC channel 16 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan17_raw = 0; //**  us  RC channel 17 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan18_raw = 0; //**  us  RC channel 18 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-
-
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = -0.2; /*(Body yaw rate in radians*/
+  float thrust = 0.5; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
 
   // Initialize the required buffers
   mavlink_message_t msg;
   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-  int type = MAV_TYPE_GROUND_ROVER;
+
   // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
 
-  mavlink_msg_rc_channels_override_pack(target_system, target_component, &msg, target_component, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, chan9_raw, chan10_raw, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw, chan16_raw, chan17_raw, chan18_raw,0);
+  // Copy the message to the send buffer
   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
   Serial.write(buf, len);
-
-
 }
 
 
@@ -362,40 +340,32 @@ uint16_t chan18_raw = 0; //**  us  RC channel 18 value. A value of 0 or UINT16_M
 
 void command_right() {
 
-uint8_t target_system = 255 ;  //  System ID
-uint8_t target_component = 0;   //  Component ID
-uint16_t chan1_raw = 0;//  us  RC channel 1 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan2_raw = 0; //  us  RC channel 2 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan3_raw = 0; //  us  RC channel 3 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan4_raw = 1600; //  us  RC channel 4 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan5_raw = 0; //  us  RC channel 5 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan6_raw = 0; //  us  RC channel 6 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan7_raw = 0; //  us  RC channel 7 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan8_raw = 0; //  us  RC channel 8 value. A value of UINT16_MAX means to ignore this field. A value of 0 means to release this channel back to the RC radio.
-uint16_t chan9_raw = 0;  //**  us  RC channel 9 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan10_raw = 0; //**  us  RC channel 10 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan11_raw = 0; //**  us  RC channel 11 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan12_raw = 0; //**  us  RC channel 12 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan13_raw = 0; //**  us  RC channel 13 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan14_raw = 0; //**  us  RC channel 14 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan15_raw = 0; //**  us  RC channel 15 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan16_raw = 0; //**  us  RC channel 16 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan17_raw = 0; //**  us  RC channel 17 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-uint16_t chan18_raw = 0; //**  us  RC channel 18 value. A value of 0 or UINT16_MAX means to ignore this field. A value of UINT16_MAX-1 means to release this channel back to the RC radio.
-
-
+  //MAVLINK  MESSAGE
+  int sysid = 1;
+  int compid = MAV_COMP_ID_PATHPLANNER;
+  uint32_t time_boot_ms = 0;
+  uint8_t target_system = 1; /*<System ID of vehicle*/
+  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
+  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
+  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
+  float body_roll_rate = 0; /*< Body roll rate not supported*/
+  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
+  float body_yaw_rate = 0.2; /*(Body yaw rate in radians*/
+  float thrust = 0.5; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
+  float thrust_body = (000);
 
   // Initialize the required buffers
   mavlink_message_t msg;
   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-  int type = MAV_TYPE_GROUND_ROVER;
+
   // Pack the message
+  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
 
-  mavlink_msg_rc_channels_override_pack(target_system, target_component, &msg, target_component, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, chan9_raw, chan10_raw, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw, chan16_raw, chan17_raw, chan18_raw,0);
+  // Copy the message to the send buffer
   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+  // Send the message (.write sends as bytes)
+  //delay(1);
   Serial.write(buf, len);
-
-
 }
 
 
@@ -430,106 +400,6 @@ void command_stop() {
   //delay(1);
   Serial.write(buf, len);
 }
-
-
-void command_lefttrack () {
-
-  //MAVLINK  MESSAGE
-  int sysid = 1;
-  int compid = MAV_COMP_ID_PATHPLANNER;
-  uint32_t time_boot_ms = 0;
-  uint8_t target_system = 1; /*<System ID of vehicle*/
-  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
-  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
-  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
-  float body_roll_rate = 0; /*< Body roll rate not supported*/
-  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
-  float body_yaw_rate = -0.2; /*(Body yaw rate in radians*/
-  float thrust = 0.0; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
-  float thrust_body = (000);
-
-  // Initialize the required buffers
-  mavlink_message_t msg;
-  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-
-  // Pack the message
-  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
-
-  // Copy the message to the send buffer
-  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
-  // Send the message (.write sends as bytes)
-  //delay(1);
-  Serial.write(buf, len);
-}
-
-
-
-void command_righttrack() {
-
-
-  
-  //MAVLINK  MESSAGE
-  int sysid = 1;
-  int compid = MAV_COMP_ID_PATHPLANNER;
-  uint32_t time_boot_ms = 0;
-  uint8_t target_system = 1; /*<System ID of vehicle*/
-  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
-  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
-  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
-  float body_roll_rate = 0; /*< Body roll rate not supported*/
-  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
-  float body_yaw_rate = -0.2; /*(Body yaw rate in radians*/
-  float thrust = 0.0; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
-  float thrust_body = (000);
-
-  // Initialize the required buffers
-  mavlink_message_t msg;
-  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-
-  // Pack the message
-  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
-
-  // Copy the message to the send buffer
-  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
-  // Send the message (.write sends as bytes)
-  //delay(1);
-  Serial.write(buf, len);
-}
-
-
-
-void command_fwtrack() {
-
-
-  //MAVLINK  MESSAGE
-  int sysid = 1;
-  int compid = MAV_COMP_ID_PATHPLANNER;
-  uint32_t time_boot_ms = 0;
-  uint8_t target_system = 1; /*<System ID of vehicle*/
-  uint8_t target_component = 0; /*< Component ID of flight controller or just 0*/
-  uint8_t type_mask = 163; /*  Use Yaw Rate + Throttle : 0b10100011 / 0xA3 / 163 (decimal)   Use Attitude + Throttle: 0b00100111 / 0x27 / 39 (decimal)*/
-  float q = (1000); /*< Attitude quaternion (w, x, y, z order, zero-rotation is {1, 0, 0, 0})Note that zero-rotation causes vehicle to point North. */
-  float body_roll_rate = 0; /*< Body roll rate not supported*/
-  float body_pitch_rate = 1; /*< Body pitch rate not supporte*/
-  float body_yaw_rate = 0.0; /*(Body yaw rate in radians*/
-  float thrust = 0.2; /*< 0=throttle 0%, +1=forward at WP_SPEED, -1=backwards at WP_SPEED*/
-  float thrust_body = (000);
-
-  // Initialize the required buffers
-  mavlink_message_t msg;
-  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-
-  // Pack the message
-  mavlink_msg_set_attitude_target_pack(sysid, compid, &msg, time_boot_ms,  target_system, target_component, type_mask, 0000, body_roll_rate, body_pitch_rate, body_yaw_rate, thrust, 000);
-
-  // Copy the message to the send buffer
-  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
-  // Send the message (.write sends as bytes)
-  //delay(1);
-  Serial.write(buf, len);
-}
-
-
 
 
 
@@ -601,7 +471,7 @@ void loop(void) {
 
     processUDPData();
     controlServo();
-    
+
 
   }
 
